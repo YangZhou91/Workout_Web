@@ -59,11 +59,17 @@ export interface Section {
   html: string; // rendered content
 }
 
+export interface DroppedHeading {
+  heading: string; // verbatim ### heading text that failed to parse
+  reason: string; // why it was dropped (e.g. "unparseable date")
+}
+
 export interface TrainingLogDocument {
   title: string;
   meta: Record<string, string>;
   documentSections: Section[];
   workouts: Workout[]; // ordered by date
+  droppedWorkouts: DroppedHeading[]; // ### blocks under 训练记录 that failed heading parse
 }
 
 // --- Analytics output (computed from Workout[] in US4; always traceable) ---

@@ -1,15 +1,51 @@
 ---
+import Layout from "../layouts/Layout.astro";
+import WorkoutCard from "../components/WorkoutCard.astro";
+import EmptyState from "../components/EmptyState.astro";
+import BuildReport from "../components/BuildReport.astro";
+import { loadTrainingLog } from "../data/log";
+import { buildReport } from "../parser/report";
+
+const doc = await loadTrainingLog();
+const { workouts } = doc;
+const report = buildReport(doc);
+const newestFirst = [...workouts].sort((a, b) => b.date.localeCompare(a.date));
+
+const total = workouts.length;
+const first = workouts[0]?.date;
+const last = workouts[workouts.length - 1]?.date;
+const completeCount = workouts.filter((w) => w.status === "complete").length;
 ---
-<html lang="zh">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>训练日志</title>
-  </head>
-  <body>
-    <main>
-      <h1>🏋️ 训练日志</h1>
-      <p>脚手架已就绪。</p>
-    </main>
-  </body>
-</html>
+
+<Layout title="训练日志">
+  <header class="page-head">
+    <h1>🏋️ 训练日志</h1>
+    <p class="sub">
+      {
+        total > 0 ? (
+          <>
+            共 {total} 次训练（{completeCount} 次完整记录）· {first} → {last}
+          </>
+        ) : (
+          "暂无训练记录"
+        )
+      }
+    </p>
+  </header>
+
+  <BuildReport report={report} />
+
+  {
+    newestFirst.length > 0 ? (
+      <ul class="workout-list">
+        {newestFirst.map((w) => (
+          <li>
+            <WorkoutCard workout={w} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <EmptyState />
+    )
+  }
+</Layout>

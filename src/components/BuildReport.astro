@@ -1,0 +1,24 @@
+---
+import type { BuildReport } from "../parser/report";
+
+interface Props {
+  report: BuildReport;
+}
+const { report } = Astro.props;
+---
+
+{
+  report.hasIssues && (
+    <details class="report" open>
+      <summary>⚠️ 解析报告：{report.dropped.length} 条训练记录标题无法解析</summary>
+      <p>以下标题位于「📅 训练记录」下，但日期格式无法识别，已被跳过：</p>
+      <ul>
+        {report.dropped.map((d) => (
+          <li>
+            <code>### {d.heading}</code> — {d.reason}
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}

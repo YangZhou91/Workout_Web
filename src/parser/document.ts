@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
-import type { Section, TrainingLogDocument, Workout } from "../types";
+import type { DroppedHeading, Section, TrainingLogDocument, Workout } from "../types";
 import { parseWorkout } from "./workout";
 
 const processor = unified()
@@ -68,13 +68,20 @@ export async function parseDocument(md: string): Promise<TrainingLogDocument> {
 
   const documentSections: Section[] = [];
   const workouts: Workout[] = [];
+  const droppedWorkouts: DroppedHeading[] = [];
 
   for (const sec of topSections) {
     if (sec.heading.includes("训练记录")) {
       for (const sub of splitSections(sec.body, "###")) {
         const w = parseWorkout(`### ${sub.heading}`, sub.body);
-        if (w) workouts.push(w);
-        else console.warn(`[parser] dropped workout (unparseable date): ### ${sub.heading}`);
+        if (w) {
+          workouts.push(w);
+        } else {
+          droppedWorkouts.push({ heading: sub.heading, reason: "unparseable date" });
+          console.warn(
+            `[parser] dropped workout (unparseable date): ### ${sub.heading}`,
+          );
+        }
       }
     } else {
       const html = await renderMarkdown(`## ${sec.heading}\n${sec.body}`);
@@ -84,5 +91,5 @@ export async function parseDocument(md: string): Promise<TrainingLogDocument> {
 
   workouts.sort((a, b) => a.date.localeCompare(b.date));
 
-  return { title, meta, documentSections, workouts };
+  return { title, meta, documentSections, workouts, droppedWorkouts };
 }

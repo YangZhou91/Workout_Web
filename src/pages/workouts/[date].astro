@@ -1,0 +1,52 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { loadTrainingLog } from "../../data/log";
+import { renderMarkdown } from "../../parser/document";
+import { statusLabel, formatDuration } from "../../util/format";
+
+export async function getStaticPaths() {
+  const { workouts } = await loadTrainingLog();
+  return workouts.map((w) => ({
+    params: { date: w.id },
+    props: { workout: w },
+  }));
+}
+
+const { workout } = Astro.props;
+const bodyHtml = await renderMarkdown(workout.rawBody);
+
+const st = workout.sessionTime;
+const timeLabel = st
+  ? [
+      st.start && st.end ? `${st.start}–${st.end}` : null,
+      st.durationMin ? `约 ${formatDuration(st.durationMin)}` : null,
+    ]
+        .filter(Boolean)
+        .join(" · ")
+  : null;
+---
+
+<Layout title={`${workout.date} ${workout.type ?? ""}`} description={workout.authorTotal?.raw}>
+  <header class="detail-head">
+    <div class="top">
+      <span class="date">{workout.date}</span>
+      {workout.weekday && <span class="weekday">{workout.weekday}</span>}
+      <span class={`status-badge status-${workout.status}`}>{statusLabel(workout.status)}</span>
+    </div>
+    {workout.type && <div class="type">{workout.type}</div>}
+    {
+      (workout.gym || timeLabel) && (
+        <div class="meta" style="margin-top:8px;">
+          {workout.gym && <span>📍 {workout.gym}</span>}
+          {timeLabel && <span>⏱ {timeLabel}</span>}
+        </div>
+      )
+    }
+    {workout.authorTotal?.raw && <div class="total" style="margin-top:6px;">📊 {workout.authorTotal.raw}</div>}
+    <a class="back-link" href="/">← 返回列表</a>
+  </header>
+
+  <section class="prose">
+    <div class="workout-body" set:html={bodyHtml} />
+  </section>
+</Layout>

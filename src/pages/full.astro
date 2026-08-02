@@ -1,0 +1,21 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { loadTrainingLog } from "../data/log";
+
+const { documentSections, title } = await loadTrainingLog();
+---
+
+<Layout title="全文" description={title}>
+  <header class="page-head">
+    <h1>📖 训练日志全文</h1>
+    <p class="sub">{title}</p>
+  </header>
+
+  <section class="prose">
+    {
+      documentSections.map((s) => (
+        <section class="doc-section" set:html={s.html} />
+      ))
+    }
+  </section>
+</Layout>

@@ -1,0 +1,36 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const siteTitle = "训练日志";
+const fullTitle = title === siteTitle ? title : `${title} · ${siteTitle}`;
+---
+
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+  </head>
+  <body>
+    <nav class="site-nav">
+      <div class="inner">
+        <a class="brand" href="/">🏋️ 训练日志</a>
+        <div class="links">
+          <a href="/">记录</a>
+          <a href="/full">全文</a>
+        </div>
+      </div>
+    </nav>
+    <main class="container">
+      <slot />
+    </main>
+  </body>
+</html>

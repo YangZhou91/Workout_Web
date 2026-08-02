@@ -1,0 +1,32 @@
+---
+import type { Workout } from "../types";
+import { statusLabel, formatDuration } from "../util/format";
+
+interface Props {
+  workout: Workout;
+}
+const { workout } = Astro.props;
+const href = `/workouts/${workout.id}/`;
+---
+
+<a href={href}>
+  <article class="card">
+    <div class="row1">
+      <span class="date">{workout.date}</span>
+      {workout.weekday && <span class="weekday">{workout.weekday}</span>}
+      <span class={`status-badge status-${workout.status}`}>{statusLabel(workout.status)}</span>
+      {workout.type && <span class="type">{workout.type}</span>}
+    </div>
+    {
+      (workout.gym || workout.sessionTime?.durationMin) && (
+        <div class="meta">
+          {workout.gym && <span>📍 {workout.gym}</span>}
+          {workout.sessionTime?.durationMin && (
+            <span>⏱ {formatDuration(workout.sessionTime.durationMin)}</span>
+          )}
+        </div>
+      )
+    }
+    {workout.authorTotal?.raw && <div class="total">📊 {workout.authorTotal.raw}</div>}
+  </article>
+</a>
