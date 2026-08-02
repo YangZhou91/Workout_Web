@@ -31,9 +31,6 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Build
         run: npm run build
-        env:
-          # Astro picks up site/base from astro.config.mjs; configure-pages
-          # also exposes the base path if you'd rather inject it via env.
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
