@@ -299,6 +299,82 @@ a:hover {
   padding-left: 1.2em;
 }
 
+/* ---------- Browse controls (search + date nav) ---------- */
+.browse-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.search-bar input[type="search"] {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.date-range {
+  display: flex;
+  gap: 8px;
+}
+.date-range label,
+.date-nav .ctrl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+input[type="search"],
+input[type="date"],
+select {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+input:focus,
+select:focus {
+  outline: 2px solid var(--accent-weak);
+  border-color: var(--accent);
+}
+.search-clear {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.search-clear:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.date-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+.filter-status {
+  margin-top: 6px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.filter-empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-muted);
+}
+
 @media (max-width: 480px) {
   .card .type {
     margin-left: 0;

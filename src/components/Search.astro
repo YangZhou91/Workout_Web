@@ -1,0 +1,19 @@
+---
+// Pure markup island. Filter/sort/jump logic lives in the controller <script>
+// on src/pages/index.astro, which queries these element ids.
+---
+
+<div class="search-bar">
+  <input
+    type="search"
+    id="search-input"
+    placeholder="搜索动作 / 部位 / 门店…"
+    autocomplete="off"
+    aria-label="搜索训练记录"
+  />
+  <div class="date-range">
+    <label>从<input type="date" id="date-from" aria-label="起始日期" /></label>
+    <label>到<input type="date" id="date-to" aria-label="结束日期" /></label>
+  </div>
+  <button type="button" id="search-clear" class="search-clear">清除</button>
+</div>

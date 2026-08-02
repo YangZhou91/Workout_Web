@@ -1,0 +1,32 @@
+---
+import type { Workout } from "../types";
+
+// Pure markup island (sort + jump-to-date). Controller logic is in
+// src/pages/index.astro. Dates are passed newest-first for the jump list.
+interface Props {
+  workouts: Workout[];
+}
+const { workouts } = Astro.props;
+const dates = [...workouts].sort((a, b) => b.date.localeCompare(a.date));
+---
+
+<div class="date-nav">
+  <label class="ctrl">排序
+    <select id="sort-select" aria-label="排序方式">
+      <option value="desc">最新优先</option>
+      <option value="asc">最早优先</option>
+    </select>
+  </label>
+  <label class="ctrl">跳到日期
+    <select id="date-jump" aria-label="跳到指定日期">
+      <option value="">全部日期</option>
+      {
+        dates.map((w) => (
+          <option value={w.date}>
+            {w.date} {w.weekday} {w.type ?? ""}
+          </option>
+        ))
+      }
+    </select>
+  </label>
+</div>

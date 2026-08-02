@@ -3,6 +3,8 @@ import Layout from "../layouts/Layout.astro";
 import WorkoutCard from "../components/WorkoutCard.astro";
 import EmptyState from "../components/EmptyState.astro";
 import BuildReport from "../components/BuildReport.astro";
+import Search from "../components/Search.astro";
+import DateNav from "../components/DateNav.astro";
 import { loadTrainingLog } from "../data/log";
 import { buildReport } from "../parser/report";
 
@@ -31,21 +33,111 @@ const completeCount = workouts.filter((w) => w.status === "complete").length;
         )
       }
     </p>
+    <p class="sub filter-status" id="filter-status" hidden></p>
   </header>
 
   <BuildReport report={report} />
 
   {
+    newestFirst.length > 0 && (
+      <div class="browse-controls">
+        <Search />
+        <DateNav workouts={newestFirst} />
+      </div>
+    )
+  }
+
+  {
     newestFirst.length > 0 ? (
-      <ul class="workout-list">
-        {newestFirst.map((w) => (
-          <li>
-            <WorkoutCard workout={w} />
-          </li>
-        ))}
-      </ul>
+      <>
+        <ul class="workout-list" id="workout-list">
+          {newestFirst.map((w) => (
+            <li>
+              <WorkoutCard workout={w} />
+            </li>
+          ))}
+        </ul>
+        <p class="filter-empty" id="no-results" hidden>没有匹配的训练记录 🔍</p>
+      </>
     ) : (
       <EmptyState />
     )
   }
 </Layout>
+
+<script>
+  const list = document.getElementById("workout-list");
+  if (list) {
+    type Card = { li: HTMLLIElement; date: string; search: string };
+    const items = [...list.querySelectorAll<HTMLLIElement>("li")];
+    const cards: Card[] = items.map((li) => {
+      const el = li.querySelector<HTMLElement>("[data-card]");
+      return {
+        li,
+        date: el?.dataset.date ?? "",
+        search: (el?.dataset.search ?? "").toLowerCase(),
+      };
+    });
+    const total = cards.length;
+
+    const $ = <T extends HTMLElement>(id: string) =>
+      document.getElementById(id) as T | null;
+    const q = $<HTMLInputElement>("search-input");
+    const from = $<HTMLInputElement>("date-from");
+    const to = $<HTMLInputElement>("date-to");
+    const sortSel = $<HTMLSelectElement>("sort-select");
+    const jump = $<HTMLSelectElement>("date-jump");
+    const clear = $<HTMLButtonElement>("search-clear");
+    const status = $<HTMLElement>("filter-status");
+    const empty = $<HTMLElement>("no-results");
+
+    function apply() {
+      const kw = (q?.value ?? "").trim().toLowerCase();
+      const dFrom = from?.value ?? "";
+      const dTo = to?.value ?? "";
+      const dj = jump?.value ?? "";
+      let visible = 0;
+      for (const c of cards) {
+        const show =
+          (!kw || c.search.includes(kw)) &&
+          (!dFrom || c.date >= dFrom) &&
+          (!dTo || c.date <= dTo) &&
+          (!dj || c.date === dj);
+        c.li.hidden = !show;
+        if (show) visible++;
+      }
+      // reorder DOM so tab/scroll order follows the chosen sort
+      const dir = sortSel?.value === "asc" ? 1 : -1;
+      cards.sort((a, b) => dir * a.date.localeCompare(b.date));
+      const frag = document.createDocumentFragment();
+      for (const c of cards) frag.appendChild(c.li);
+      list.appendChild(frag);
+
+      const active = Boolean(kw || dFrom || dTo || dj);
+      if (status) {
+        if (active) {
+          status.hidden = false;
+          status.textContent = `匹配 ${visible} / ${total} 条`;
+        } else {
+          status.hidden = true;
+          status.textContent = "";
+        }
+      }
+      if (empty) empty.hidden = visible !== 0;
+    }
+
+    q?.addEventListener("input", apply);
+    from?.addEventListener("change", apply);
+    to?.addEventListener("change", apply);
+    sortSel?.addEventListener("change", apply);
+    jump?.addEventListener("change", apply);
+    clear?.addEventListener("click", () => {
+      if (q) q.value = "";
+      if (from) from.value = "";
+      if (to) to.value = "";
+      if (jump) jump.value = "";
+      apply();
+    });
+    apply();
+  }
+</script>

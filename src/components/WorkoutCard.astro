@@ -2,6 +2,7 @@
 import type { Workout } from "../types";
 import { statusLabel, formatDuration } from "../util/format";
 import { path } from "../util/url";
+import { haystack } from "../util/search";
 
 interface Props {
   workout: Workout;
@@ -11,7 +12,12 @@ const href = path(`workouts/${workout.id}/`);
 ---
 
 <a href={href}>
-  <article class="card">
+  <article
+    class="card"
+    data-card
+    data-date={workout.date}
+    data-search={haystack(workout)}
+  >
     <div class="row1">
       <span class="date">{workout.date}</span>
       {workout.weekday && <span class="weekday">{workout.weekday}</span>}
