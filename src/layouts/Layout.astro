@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { homePath, path } from "../util/url";
 
 interface Props {
   title: string;
@@ -22,10 +23,10 @@ const fullTitle = title === siteTitle ? title : `${title} · ${siteTitle}`;
   <body>
     <nav class="site-nav">
       <div class="inner">
-        <a class="brand" href="/">🏋️ 训练日志</a>
+        <a class="brand" href={homePath()}>🏋️ 训练日志</a>
         <div class="links">
-          <a href="/">记录</a>
-          <a href="/full">全文</a>
+          <a href={homePath()}>记录</a>
+          <a href={path("full")}>全文</a>
         </div>
       </div>
     </nav>

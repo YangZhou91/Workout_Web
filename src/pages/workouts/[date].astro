@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import { loadTrainingLog } from "../../data/log";
 import { renderMarkdown } from "../../parser/document";
 import { statusLabel, formatDuration } from "../../util/format";
+import { homePath } from "../../util/url";
 
 export async function getStaticPaths() {
   const { workouts } = await loadTrainingLog();
@@ -43,7 +44,7 @@ const timeLabel = st
       )
     }
     {workout.authorTotal?.raw && <div class="total" style="margin-top:6px;">📊 {workout.authorTotal.raw}</div>}
-    <a class="back-link" href="/">← 返回列表</a>
+    <a class="back-link" href={homePath()}>← 返回列表</a>
   </header>
 
   <section class="prose">

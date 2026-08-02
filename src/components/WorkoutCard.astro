@@ -1,12 +1,13 @@
 ---
 import type { Workout } from "../types";
 import { statusLabel, formatDuration } from "../util/format";
+import { path } from "../util/url";
 
 interface Props {
   workout: Workout;
 }
 const { workout } = Astro.props;
-const href = `/workouts/${workout.id}/`;
+const href = path(`workouts/${workout.id}/`);
 ---
 
 <a href={href}>

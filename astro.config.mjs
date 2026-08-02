@@ -1,7 +1,8 @@
 import { defineConfig } from 'astro/config';
 
-// site + base are set in US2 (T021) before deploying to GitHub Pages.
+// GitHub Pages project site (T021). Internal links resolve under `base`
+// via src/util/url.ts — Astro only auto-prefixes bundled assets, not <a href>.
 export default defineConfig({
-  // site: 'https://<user>.github.io',
-  // base: '/<repo>/',
+  site: 'https://yangzhou91.github.io',
+  base: '/Workout_Web',
 });
