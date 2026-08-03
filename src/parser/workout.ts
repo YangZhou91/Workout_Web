@@ -1,4 +1,5 @@
-import type { AuthorTotal, SessionTime, Status, Workout } from "../types";
+import type { AuthorTotal, Exercise, SessionTime, Status, Workout } from "../types";
+import { parseExerciseLine } from "./sets";
 
 const STATUS_BY_EMOJI: Record<string, Status> = {
   "✅": "complete",
@@ -54,7 +55,9 @@ export function parseWorkout(heading: string, body: string): Workout | null {
   let sessionTime: SessionTime | null = null;
   let authorTotal: AuthorTotal | null = null;
   let notes: string | null = null;
+  const exercises: Exercise[] = [];
 
+  const META_PREFIXES = ["门店：", "时间：", "状态："];
   for (const line of body.split(/\r?\n/)) {
     // top-level bullet only — indented sub-bullets stay in rawBody
     const bullet = line.match(/^[-*]\s+(.+)$/);
@@ -66,6 +69,18 @@ export function parseWorkout(heading: string, body: string): Workout | null {
     else if ((c = content.match(/^时间：\s*(.+)$/))) sessionTime = parseSessionTime(c[1]);
     else if ((c = content.match(/^状态：\s*(.+)$/))) notes = c[1].trim();
     else if (AUTHOR_TOTAL_RE.test(content)) authorTotal = parseAuthorTotal(content);
+    else if (
+      /[：:]/.test(content) &&
+      !content.startsWith("**") &&
+      !META_PREFIXES.some((p) => content.startsWith(p))
+    ) {
+      // Exercise line: name：set-notation. Guard on a set token so prose notes
+      // that happen to contain ： (e.g. "用户于 …00：11 明确订正：…") are not
+      // misclassified as exercises. Aggregate summaries without per-set data
+      // still enter parseExerciseLine and fall through to verbatim (SC-011).
+      if (!/kg|lb|[x×]|组|次|分钟|秒/.test(content)) continue;
+      exercises.push(parseExerciseLine(content));
+    }
   }
 
   return {
@@ -76,7 +91,7 @@ export function parseWorkout(heading: string, body: string): Workout | null {
     type,
     gym,
     sessionTime,
-    exercises: [],
+    exercises,
     authorTotal,
     rawBody: body.trim(),
     notes,

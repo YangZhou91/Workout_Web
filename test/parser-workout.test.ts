@@ -49,7 +49,11 @@ describe("parseWorkout (metadata layer)", () => {
     expect(w!.authorTotal?.groupCount).toBe(5);
     expect(w!.notes).toBe("完整记录");
     expect(w!.rawBody).toContain("史密斯深蹲：55 kg × 12 × 4");
-    expect(w!.exercises).toEqual([]);
+    // US4: exercise lines are now parsed at layer 3 (one exercise here).
+    expect(w!.exercises).toHaveLength(1);
+    expect(w!.exercises[0].name).toBe("史密斯深蹲");
+    expect(w!.exercises[0].sets).toHaveLength(1);
+    expect(w!.exercises[0].sets[0].weightKg).toBe(55);
   });
 
   it("parses session time and duration (hours + minutes)", () => {

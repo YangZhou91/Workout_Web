@@ -19,6 +19,7 @@ export interface WorkSet {
   reps: number | null;
   setCount: number; // default 1
   assistKg: number | null;
+  durationMin: number | null; // cardio minutes / stretch seconds→min; null for resistance
   flags: SetFlags;
 }
 
