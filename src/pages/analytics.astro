@@ -1,0 +1,136 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Chart from "../components/Chart.astro";
+import { computeAnalytics } from "../data/analytics";
+import { path } from "../util/url";
+
+const report = await computeAnalytics();
+
+// --- Volume trend chart data (segmented by gym — FR-019) ---
+const sessions = report.sessionVolumes;
+const dateLabels = sessions.map((s) => s.workoutId.slice(5)); // MM-DD for axis
+const gymOrder: string[] = [];
+for (const s of sessions) {
+  const g = s.gym ?? "未知门店";
+  if (!gymOrder.includes(g)) gymOrder.push(g);
+}
+const volumeDatasets = gymOrder.map((g) => ({
+  label: g,
+  data: sessions.map((s) => ((s.gym ?? "未知门店") === g ? s.resistanceVolumeKg : null)),
+}));
+
+// --- PRs grouped by gym ---
+const prsByGym = new Map<string, typeof report.records>();
+for (const pr of report.records) {
+  const g = pr.gym ?? "未知门店";
+  if (!prsByGym.has(g)) prsByGym.set(g, []);
+  prsByGym.get(g)!.push(pr);
+}
+for (const [, list] of prsByGym) list.sort((a, b) => b.weightKg - a.weightKg);
+
+// --- Estimated 1RM per (exercise, gym): keep the highest estimate over time ---
+const best1RM = new Map<string, { exercise: string; gym: string | null; est: number; asOf: string; top: number }>();
+for (const t of report.trends) {
+  if (t.estimated1RM === undefined) continue;
+  const key = `${t.exercise} ${t.gym ?? "?"}`;
+  const cur = best1RM.get(key);
+  if (!cur || t.estimated1RM > cur.est) {
+    best1RM.set(key, { exercise: t.exercise, gym: t.gym, est: t.estimated1RM, asOf: t.date, top: t.topWeightKg });
+  }
+}
+const oneRMList = [...best1RM.values()].sort((a, b) => b.est - a.est);
+
+const fmt = (n: number) => Math.round(n).toLocaleString("zh");
+const fmt1 = (n: number) => n.toFixed(1);
+---
+
+<Layout title="数据分析" description="训练容量趋势、各动作 PR 与强度估计（按门店分段，源自已解析的组次记录）。">
+  <section class="analytics-head">
+    <h1>数据分析</h1>
+    <p class="caveat">
+      以下所有数字均为<strong>派生/近似值</strong>，由构建时解析的组次记录计算得出（SC-007/009）。
+      抗阻容量仅含可信负重组；辅助 / 自重 / 有氧 / 拉伸 / 推测 / 低置信度组均已按规则排除或单独标注。
+    </p>
+  </section>
+
+  {report.crossSegmentWarnings.length > 0 && (
+    <aside class="cross-warn">
+      <h2>⚠️ 跨门店提示</h2>
+      <ul>
+        {report.crossSegmentWarnings.map((w) => <li>{w}</li>)}
+      </ul>
+    </aside>
+  )}
+
+  <section class="analytics-block">
+    <h2>抗阻容量趋势（按门店分段）</h2>
+    <Chart id="volume-chart" type="bar" labels={dateLabels} datasets={volumeDatasets} yLabel="容量 (kg)" />
+    <table class="data-table">
+      <thead>
+        <tr><th>日期</th><th>门店</th><th>抗阻容量</th><th>自重组数</th><th>有氧(分)</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        {sessions.map((s) => (
+          <tr>
+            <td><a href={path(`workouts/${s.workoutId}`)}>{s.workoutId}</a></td>
+            <td>{s.gym ?? "未知门店"}</td>
+            <td>{fmt(s.resistanceVolumeKg)} kg</td>
+            <td>{s.bodyweightGroupCount || "—"}</td>
+            <td>{s.cardioMinutes ?? "—"}</td>
+            <td>{s.notes.length ? s.notes.join("；") : "—"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="analytics-block">
+    <h2>各动作 PR（最高负重组，按门店分段）</h2>
+    <p class="hint">单边负重已按 ×2 折算为有效总负重；辅助 / 自重动作不参与重量 PR。</p>
+    {[...prsByGym.entries()].map(([gym, list]) => (
+      <div class="gym-group">
+        <h3>{gym}</h3>
+        <table class="data-table">
+          <thead><tr><th>动作</th><th>最高重量</th><th>达成日期</th></tr></thead>
+          <tbody>
+            {list.map((pr) => (
+              <tr>
+                <td>{pr.exercise}</td>
+                <td>{fmt1(pr.weightKg)} kg</td>
+                <td><a href={path(`workouts/${pr.workoutId}`)}>{pr.asOf}</a></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ))}
+  </section>
+
+  <section class="analytics-block">
+    <h2>训练强度估计（Epley 1RM，<em>估计值</em>）</h2>
+    <p class="hint">1RM = 重量 × (1 + 次数 / 30)，取每个动作在各门店的历史最高估计；仅供参考。</p>
+    <table class="data-table">
+      <thead><tr><th>动作</th><th>门店</th><th>最高重量</th><th>估计 1RM</th><th>来源日期</th></tr></thead>
+      <tbody>
+        {oneRMList.map((r) => (
+          <tr>
+            <td>{r.exercise}</td>
+            <td>{r.gym ?? "未知门店"}</td>
+            <td>{fmt1(r.top)} kg</td>
+            <td>{fmt1(r.est)} kg</td>
+            <td><a href={path(`workouts/${r.asOf}`)}>{r.asOf}</a></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="traceability">
+    <h2>数据来源与可追溯性</h2>
+    <p>
+      以上每个数字均可追溯至具体的训练日与动作行：日期链接指向对应训练记录页，原始 Markdown 见
+      <a href={path("full")}>全文</a>。未识别 / 低置信度的动作行按 SC-011 原文保留并排除在统计之外。
+    </p>
+    <p class="generated">生成于 {report.generatedAt.slice(0, 19).replace("T", " ")}（构建时）</p>
+  </footer>
+</Layout>

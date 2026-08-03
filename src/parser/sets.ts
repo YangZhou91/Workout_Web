@@ -106,7 +106,12 @@ export function parseExerciseLine(line: string): Exercise {
   const segs: ParsedSegment[] = [];
   for (const raw of segTexts) {
     const seg = recognize(raw);
-    if (!seg) continue;
+    if (!seg) {
+      // Trailing exclusion clause with no set of its own (e.g. "；仅为推测，不计入")
+      // retroactively excludes the preceding set-bearing segments (contract §2).
+      if (EXCLUDED_RE.test(raw)) segs.forEach((s) => (s.excluded = true));
+      continue;
+    }
     if (EXCLUDED_RE.test(raw)) seg.excluded = true;
     if (ASSIST_RE.test(raw)) seg.assisted = true;
     segs.push(seg);

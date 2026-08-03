@@ -1,0 +1,69 @@
+---
+// Chart island (T037). Chart.js is imported in this component's module script,
+// so Astro only ships it on pages that render <Chart/> — i.e. /analytics —
+// keeping the rest of the site JS-free (research R5). One init pass binds every
+// canvas[data-chart] on the page; the JSON spec is embedded server-side.
+interface Dataset {
+  label: string;
+  data: (number | null)[];
+  borderColor?: string;
+  backgroundColor?: string;
+}
+interface Props {
+  id: string;
+  type: "bar" | "line";
+  labels: string[];
+  datasets: Dataset[];
+  yLabel?: string;
+}
+const { id, type, labels, datasets, yLabel } = Astro.props;
+const spec = JSON.stringify({ type, labels, datasets, yLabel });
+---
+
+<figure class="chart-figure">
+  <div class="chart-canvas-wrap">
+    <canvas id={id} data-chart={spec} role="img" aria-label={`${type} chart`}></canvas>
+  </div>
+</figure>
+
+<script>
+  import { Chart } from "chart.js";
+
+  const palettes = [
+    { border: "#2563eb", bg: "rgba(37,99,235,0.6)" },
+    { border: "#dc2626", bg: "rgba(220,38,38,0.6)" },
+    { border: "#16a34a", bg: "rgba(22,163,74,0.6)" },
+    { border: "#9333ea", bg: "rgba(147,51,234,0.6)" },
+    { border: "#ea580c", bg: "rgba(234,88,12,0.6)" },
+  ];
+
+  const nodes = document.querySelectorAll<HTMLCanvasElement>("canvas[data-chart]");
+  nodes.forEach((canvas, i) => {
+    const spec = JSON.parse(canvas.dataset.chart ?? "{}");
+    const datasets = (spec.datasets ?? []).map((d: any, idx: number) => {
+      const p = palettes[idx % palettes.length];
+      return {
+        label: d.label,
+        data: d.data,
+        borderColor: d.borderColor ?? p.border,
+        backgroundColor: d.backgroundColor ?? p.bg,
+        borderWidth: 2,
+        tension: 0.25,
+        fill: spec.type === "line",
+        spanGaps: true,
+      };
+    });
+    new Chart(canvas, {
+      type: spec.type,
+      data: { labels: spec.labels ?? [], datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } },
+        scales: spec.yLabel
+          ? { y: { beginAtZero: true, title: { display: true, text: spec.yLabel } } }
+          : { y: { beginAtZero: true } },
+      },
+    });
+  });
+</script>
