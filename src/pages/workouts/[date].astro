@@ -27,13 +27,13 @@ const timeLabel = st
   : null;
 ---
 
-<Layout title={`${workout.date} ${workout.type ?? ""}`} description={workout.authorTotal?.raw}>
+<Layout title={`${workout.date} ${workout.type ?? ""}`} description={workout.authorTotal?.raw ?? `${workout.date}${workout.type ? ` ${workout.type}` : ""} 训练记录`}>
   <header class="detail-head">
-    <div class="top">
+    <h1 class="top">
       <span class="date">{workout.date}</span>
       {workout.weekday && <span class="weekday">{workout.weekday}</span>}
       <span class={`status-badge status-${workout.status}`}>{statusLabel(workout.status)}</span>
-    </div>
+    </h1>
     {workout.type && <div class="type">{workout.type}</div>}
     {
       (workout.gym || timeLabel) && (

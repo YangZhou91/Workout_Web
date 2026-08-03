@@ -199,6 +199,11 @@ a:hover {
   gap: 8px;
   flex-wrap: wrap;
 }
+.detail-head h1.top {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
 .detail-head .date {
   font-size: 1.4rem;
   font-weight: 700;
